@@ -142,6 +142,40 @@ Realtime sEMG Gesture Classification Architecture
 │  Controlled via gesture prediction   │
 └──────────────────────────────────────┘
 ```
+## Hardware and Signal Acquisition
+
+### EMG Sensor Setup
+
+The system uses **2 surface EMG channels** placed on the forearm to capture muscle activity associated with hand gestures.
+
+Recommended placement:
+
+- **Channel 1 – Flexor muscle group**
+  - Electrode placed over the *Flexor Digitorum Superficialis*
+
+- **Channel 2 – Extensor muscle group**
+  - Electrode placed over the *Extensor Digitorum*
+
+- **Reference electrode**
+  - Placed on electrically neutral tissue, in this case the wrist bone
+
+---
+
+### Acquisition Hardware
+
+- **Microcontroller:** ESP32  
+- **Interface:** USB Serial  
+
+Analog EMG signals are sampled using the ESP32 ADC and transmitted as serial packets.
+Each packet represents one simultaneous EMG sample across both channels.
+
+---
+
+### Sampling Parameters
+
+- **Sampling rate:** 1000 Hz  
+- **ADC resolution:** 12-bit
+- **Feature window size:** 100 samples
 
 ## API
 ### `POST /predict`
