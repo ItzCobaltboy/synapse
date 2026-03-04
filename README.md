@@ -14,7 +14,6 @@ Pipeline for real-time EMG Binary gesture classification using MATLAB feature ex
 synapse/
   calibration/
     calibration_collect_raw.m
-    build_calibration.m
     calibration_raw.mat
     user_calibration.json
   matlab_realtime/
@@ -54,9 +53,12 @@ python server/main.py
 Server runs at `http://127.0.0.1:8000`.
 
 ### 3) (Recommended) Build personal calibration
-1. In MATLAB, run `calibration/calibration_collect_raw.m`.
-2. Then run `calibration/build_calibration.m`.
-3. This creates `calibration/user_calibration.json`.
+1. Start the Python server (`python server/main.py`) so class remap calls can be resolved.
+2. In MATLAB, run `calibration/calibration_collect_raw.m`.
+3. Follow gesture prompts (`rest`, `g1`..`g4`).
+4. The same script now creates both:
+   - `calibration/calibration_raw.mat`
+   - `calibration/user_calibration.json`
 
 ### 4) Run real-time predictor in MATLAB
 Run `matlab_realtime/realtime_predict.m`.
@@ -162,7 +164,7 @@ Returns latest predicted gesture or `"none"`.
 ## Configuration notes
 - Serial port is currently set to `COM5` in MATLAB scripts. Change it according to your data collection setup
 - Gesture-key mapping is defined in `server/main.py`.
-- Model path and calibration paths are currently absolute in scripts. Update these paths if your project location differs.
+- Model and calibration file paths are resolved relative to the repository, so no machine-specific path edits are required.
 
 ## License
 

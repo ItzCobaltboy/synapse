@@ -1,81 +1,85 @@
 ﻿import time
+from pathlib import Path
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from joblib import load
 import numpy as np
 import json
-import os
 
 from pynput.keyboard import Controller, Key
 
 app = FastAPI()
 
 # ============================
+# Resolve repo paths
+# ============================
+BASE_DIR = Path(__file__).resolve().parents[1]
+MODEL_PATH = BASE_DIR / "model" / "svm_quadratic_python.joblib"
+CALIB_PATH = BASE_DIR / "calibration" / "user_calibration.json"
+CALIB_RAW = BASE_DIR / "calibration" / "calibration_raw.mat"
+
+# ============================
 # Load trained pipeline
 # ============================
-pipe = load(r"D:\VSCode\Synapse\project\model\svm_quadratic_python.joblib")
+pipe = load(MODEL_PATH)
 scaler = pipe["scaler"]
 model = pipe["model"]
 
-# ============================
-# Calibration file path
-# ============================
-CALIB_PATH = r"D:\VSCode\Synapse\project\calibration\user_calibration.json"
-CALIB_RAW = r"D:\VSCode\Synapse\project\calibration\calibration_raw.mat"
 
-# ============================
-# FUNCTION (instead of constant)
-# ============================
 def is_calibration_mode():
-    return os.path.exists(CALIB_RAW) and not os.path.exists(CALIB_PATH)
+    return CALIB_RAW.exists() and not CALIB_PATH.exists()
 
-# ============================
-# Try loading calibration file
-# ============================
+
 def load_calibration():
-    if os.path.exists(CALIB_PATH):
-        with open(CALIB_PATH) as f:
+    if CALIB_PATH.exists():
+        with CALIB_PATH.open() as f:
             return json.load(f)["class_map"]
-    else:
-        print("WARNING: calibration not found. Using identity mapping.")
-        return {}
+
+    print("WARNING: calibration not found. Using identity mapping.")
+    return {}
+
 
 class_map = load_calibration()
+last_pred = None
+
 
 # Hot reload before every prediction
 def remap(pred):
     global class_map
-    if os.path.exists(CALIB_PATH):
+    if CALIB_PATH.exists():
         try:
             new_map = load_calibration()
             if new_map != class_map:
                 print("Calibration reloaded.")
                 class_map = new_map
-        except:
+        except Exception:
             pass
 
     return int(class_map.get(str(pred), pred))
 
+
 keyboard = Controller()
 
 gesture_map = {
-    1: 'w',
-    2: 'a',
-    3: 's',
-    4: 'd',
-    5: Key.space
+    1: "w",
+    2: "a",
+    3: "s",
+    4: "d",
+    5: Key.space,
 }
+
 
 def press_key(key):
     keyboard.press(key)
     keyboard.release(key)
 
+
 class FeaturePacket(BaseModel):
     features: list[float]
 
+
 @app.post("/predict")
 def predict(fp: FeaturePacket):
-
     try:
         x = np.array(fp.features, dtype=np.float64).reshape(1, -1)
 
@@ -90,30 +94,28 @@ def predict(fp: FeaturePacket):
         final_pred = remap(raw_pred)
         print("Final:", final_pred)
 
-        # ============================
-        # CORRECTED KEYPRESS BLOCK
-        # ============================
         if is_calibration_mode():
             print("Calibration mode active: NOT sending keypresses.")
         else:
             if final_pred in gesture_map:
                 press_key(gesture_map[final_pred])
-        
+
         global last_pred
         last_pred = final_pred
 
-
         return {"gesture": final_pred}
 
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(500, f"Error: {str(e)}")
-    
+
+
 @app.get("/latest")
 def latest():
     if last_pred is None:
         return {"gesture": "none"}
     return {"gesture": last_pred}
-
 
 
 if __name__ == "__main__":

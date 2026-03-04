@@ -22,10 +22,12 @@ python server/main.py
    - `matlab_realtime/realtime_predict.m`
 
 ## Calibration flow
-1. Run `calibration/calibration_collect_raw.m`.
-2. Perform each prompted gesture (`rest`, `g1`..`g4`).
-3. Run `calibration/build_calibration.m`.
-4. Confirm `calibration/user_calibration.json` exists.
+1. Start Python server (`python server/main.py`).
+2. Run `calibration/calibration_collect_raw.m`.
+3. Perform each prompted gesture (`rest`, `g1`..`g4`).
+4. Confirm both files are generated:
+   - `calibration/calibration_raw.mat`
+   - `calibration/user_calibration.json`
 
 ## Realtime inference flow
 1. Start Python server (`python server/main.py`).

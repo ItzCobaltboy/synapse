@@ -1,10 +1,19 @@
 ﻿clear all; clc;
 
 % ==============================
+% Resolve script-relative paths
+% ==============================
+script_dir = fileparts(mfilename("fullpath"));
+repo_root = fileparts(script_dir);
+calib_path = fullfile(repo_root, "calibration", "user_calibration.json");
+
+% Ensure local functions/toolbox are reachable
+addpath(script_dir);
+addpath(fullfile(script_dir, "EMG-Feature-Extraction-Toolbox"));
+
+% ==============================
 % Load Personal Calibration
 % ==============================
-calib_path = ".\..\calibration\user_calibration.json";
-
 if isfile(calib_path)
     disp("Loading calibration...");
     calib = jsondecode(fileread(calib_path));
@@ -70,7 +79,7 @@ while true
     idx = idx + 1;
 
     % ==============================
-    % WINDOW READY â†’ EXTRACT FEATURES
+    % WINDOW READY -> EXTRACT FEATURES
     % ==============================
     if idx > WINDOW
         feats1 = int_feature(buffer1);
