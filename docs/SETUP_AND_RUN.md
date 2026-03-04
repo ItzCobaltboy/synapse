@@ -3,7 +3,8 @@
 ## Prerequisites
 - Python 3.10+
 - MATLAB with required signal/wavelet toolboxes used by `int_feature.m`
-- EMG hardware streaming serial lines in format `<value1,value2>`
+- EMG hardware streaming serial lines in format `<value1,value2>`. This can be done on ESP32 or Arduino or any other Microcontroller
+- It is recommended to apply smoothening to recorded EMG values at MCU level before publishing on Serial
 
 ## Python setup
 ```bash
