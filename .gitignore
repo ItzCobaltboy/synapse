@@ -205,3 +205,8 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# Project-specific generated files
+calibration/calibration_raw.mat
+calibration/user_calibration.json
+

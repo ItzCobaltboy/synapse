@@ -1,0 +1,3 @@
+[submodule "matlab_realtime/EMG-Feature-Extraction-Toolbox"]
+	path = matlab_realtime/EMG-Feature-Extraction-Toolbox
+	url = https://github.com/JingweiToo/EMG-Feature-Extraction-Toolbox.git
