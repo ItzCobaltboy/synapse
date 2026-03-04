@@ -3,7 +3,7 @@
 % ==============================
 % Load Personal Calibration
 % ==============================
-calib_path = "D:\VSCode\Synapse\project\calibration\user_calibration.json";
+calib_path = ".\..\calibration\user_calibration.json";
 
 if isfile(calib_path)
     disp("Loading calibration...");
