@@ -1,6 +1,6 @@
 ﻿# synapse
 
-Pipeline for real-time EMG gesture classification using MATLAB feature extraction and a Python FastAPI inference server.
+Pipeline for real-time EMG Binary gesture classification using MATLAB feature extraction and a Python FastAPI inference server. 
 
 ## What this repository contains
 - Real-time EMG signal ingestion (serial stream from ESP32/EMG hardware)
@@ -36,7 +36,7 @@ synapse/
 1. MATLAB reads EMG samples from serial (`<ch1,ch2>` format).
 2. MATLAB extracts features per window (`WINDOW=100`) and sends feature vectors to FastAPI `/predict`.
 3. Python server scales features and runs SVM inference.
-4. Prediction is optionally remapped using user calibration (`calibration/user_calibration.json`).
+4. Prediction is optionally remapped using user calibration (`calibration/user_calibration.json`). This is done to increase reliability of pipeline
 5. Server returns gesture ID and emits mapped keypress.
 
 ## Quick start
@@ -53,13 +53,93 @@ python server/main.py
 ```
 Server runs at `http://127.0.0.1:8000`.
 
-### 3) (Optional) Build personal calibration
+### 3) (Recommended) Build personal calibration
 1. In MATLAB, run `calibration/calibration_collect_raw.m`.
 2. Then run `calibration/build_calibration.m`.
 3. This creates `calibration/user_calibration.json`.
 
 ### 4) Run real-time predictor in MATLAB
 Run `matlab_realtime/realtime_predict.m`.
+
+## Architecture
+```
+Realtime sEMG Gesture Classification Architecture
+
+┌──────────────────────────────────────┐
+│         sEMG Sensors (2 Channels)    │
+│   Surface electrodes on forearm      │
+└──────────────────────────────────────┘
+                    │
+                    ▼
+┌──────────────────────────────────────┐
+│   Microcontroller (ESP32 / Arduino)  │
+│                                      │
+│  • Read analog EMG signals           │
+│  • Smooth / preprocess               │
+│  • Build serial packet               │
+│      "<value1,value2>"               │
+│  • Stream over USB serial            │
+└──────────────────────────────────────┘
+                    │
+                    │ Serial (115200 baud)
+                    ▼
+┌──────────────────────────────────────┐
+│              MATLAB Layer            │
+│                                      │
+│  Calibration Stage                   │
+│  • Record gesture samples            │
+│  • Compute per-channel mean/std      │
+│  • Compute gain normalization        │
+│  • Generate class remapping          │
+│  • Save user_calibration.json        │
+│                                      │
+│  Runtime Stage                       │
+│  • Read serial EMG stream            │
+│  • Apply calibration normalization   │
+│  • Maintain sliding window (100)     │
+│  • Extract EMG features              │
+│      - Time domain features          │
+│      - FFT / wavelet features        │
+│  • Send feature vector to API        │
+└──────────────────────────────────────┘
+                    │
+                    │ HTTP POST /predict
+                    │ JSON {features:[...]}
+                    ▼
+┌──────────────────────────────────────┐
+│        Python FastAPI Server         │
+│                                      │
+│  • Receive feature packet            │
+│  • Validate feature dimension        │
+│  • Standardize using trained scaler  │
+│  • Run SVM classifier                │
+│  • Apply calibration class remap     │
+│  • Return predicted gesture ID       │
+└──────────────────────────────────────┘
+                    │
+                    ▼
+┌──────────────────────────────────────┐
+│          Action Layer                │
+│                                      │
+│  Gesture → Keyboard Mapping          │
+│                                      │
+│  1 → W                               │
+│  2 → A                               │
+│  3 → S                               │
+│  4 → D                               │
+│  5 → Space                           │
+│                                      │
+│  Implemented using pynput            │
+└──────────────────────────────────────┘
+                    │
+                    ▼
+┌──────────────────────────────────────┐
+│      External Application Control    │
+│                                      │
+│  Games / Interfaces / Assistive HCI  │
+│  Controlled via gesture prediction   │
+└──────────────────────────────────────┘
+```
 
 ## API
 ### `POST /predict`
@@ -80,14 +160,9 @@ Response:
 Returns latest predicted gesture or `"none"`.
 
 ## Configuration notes
-- Serial port is currently set to `COM5` in MATLAB scripts. Change it for your machine.
+- Serial port is currently set to `COM5` in MATLAB scripts. Change it according to your data collection setup
 - Gesture-key mapping is defined in `server/main.py`.
 - Model path and calibration paths are currently absolute in scripts. Update these paths if your project location differs.
-
-## Showcase checklist
-- Include one short demo GIF/video in the GitHub README.
-- Add hardware details (sensor, board, sampling rate) in `docs/SETUP_AND_RUN.md`.
-- Add one architecture diagram for quick reviewer understanding.
 
 ## License
 
